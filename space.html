@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Orbital Simulation</title>
+    <style>
+        body {
+            background-color: #070b1a;
+            margin: 0;
+            padding: 0;
+            color: #e0e0ff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        h1 {
+            background: linear-gradient(to right, #4d7cfe, #00ddff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #a0a0d0;
+            font-size: 1rem;
+            margin-top: 0;
+        }
+
+        .simulation-area {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            background-color: #030612;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 80, 255, 0.2);
+            display: block;
+            width: 100%;
+        }
+
+        .info-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(10, 20, 40, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-family: monospace;
+            color: #c0c0ff;
+            pointer-events: none;
+        }
+
+        .controls-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(20, 30, 70, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a3b7a;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel h3 {
+            color: #4d7cfe;
+            margin-top: 0;
+            border-bottom: 1px solid #2a3b7a;
+            padding-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        label {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .control-input {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e2a50;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #4d7cfe;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #00ddff;
+            box-shadow: 0 0 10px rgba(0, 221, 255, 0.5);
+        }
+
+        .value-display {
+            min-width: 45px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        select {
+            background: #1e2a50;
+            color: #e0e0ff;
+            border: 1px solid #2a3b7a;
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            background: linear-gradient(to right, #3d6cee, #4d7cfe);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #4d7cfe, #00ddff);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
+        }
+
+        .special-button {
+            background: linear-gradient(to right, #e74c3c, #ff7043);
+        }
+
+        .special-button:hover {
+            background: linear-gradient(to right, #ff7043, #ffab91);
+        }
+
+        .data-panel {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 20px;
+            background: rgba(20, 30, 70, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a3b7a;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .data-panel h3 {
+            color: #4d7cfe;
+            margin-top: 0;
+            border-bottom: 1px solid #2a3b7a;
+            padding-bottom: 8px;
+        }
+
+        .data-columns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .data-column {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(20, 30, 70, 0.9);
+            border: 1px solid #4d7cfe;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 100;
+            max-width: 250px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.2s;
+            opacity: 0;
+        }
+
+        .tooltip h4 {
+            margin: 0 0 5px 0;
+            color: #00ddff;
+        }
+
+        .tooltip p {
+            margin: 5px 0;
+        }
+
+        .tooltip-data {
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            margin: 3px 0;
+        }
+
+        .tooltip-data span:first-child {
+            color: #a0a0d0;
+        }
+
+        .maneuver-panel {
+            display: none;
+            position: absolute;
+            background: rgba(20, 30, 70, 0.9);
+            border: 1px solid #4d7cfe;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 50;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            max-width: 300px;
+        }
+
+        .maneuver-panel h4 {
+            margin-top: 0;
+            color: #00ddff;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #a0a0d0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+        }
+
+        .close-button:hover {
+            color: #e0e0ff;
+        }
+
+        /* Loading indicator */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 5px solid rgba(20, 30, 70, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #4d7cfe;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1e2a50;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #4d7cfe;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .panel {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Orbital Simulator</h1>
+            <p class="subtitle">Realistic N-body gravitational simulation with spacecraft maneuvers</p>
+        </header>
+
+        <div class="simulation-area">
+            <canvas id="simulationCanvas" width="900" height="600"></canvas>
+            <div id="infoOverlay" class="info-overlay"></div>
+            <div id="tooltip" class="tooltip"></div>
+            <div id="maneuverPanel" class="maneuver-panel">
+                <button id="closeManeuver" class="close-button">×</button>
+                <h4>Orbital Maneuver</h4>
+                <div class="control-row">
+                    <label>Delta-V Magnitude:</label>
+                    <div class="control-input">
+                        <input type="range" id="deltaVMagnitude" min="0" max="5" step="0.1" value="1">
+                        <span class="value-display" id="deltaVMagnitudeValue">1.0</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>Direction:</label>
+                    <div class="control-input">
+                        <input type="range" id="deltaVDirection" min="0" max="360" step="5" value="0">
+                        <span class="value-display" id="deltaVDirectionValue">0°</span>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="applyManeuver">Apply Burn</button>
+                    <button id="cancelManeuver" class="special-button">Cancel</button>
+                </div>
+            </div>
+            <div id="loadingIndicator" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Initializing simulation...</p>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="panel">
+                <h3>Simulation Settings</h3>
+                <div class="control-row">
+                    <label>Simulation Speed:</label>
+                    <div class="control-input">
+                        <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
+                        <span class="value-display" id="timeScaleValue">1.0x</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>G Constant:</label>
+                    <div class="control-input">
+                        <input type="range" id="gravityConstant" min="10" max="1000" step="10" value="100">
+                        <span class="value-display" id="gravityConstantValue">100</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>System Type:</label>
+                    <div class="control-input">
+                        <select id="systemType">
+                            <option value="sun-earth">Sun-Earth System</option>
+                            <option value="sun-earth-moon">Sun-Earth-Moon</option>
+                            <option value="binary-star">Binary Star System</option>
+                            <option value="custom">Custom System</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>N-body Physics:</label>
+                    <div class="control-input">
+                        <label class="switch">
+                            <input type="checkbox" id="nBodyPhysics" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="resetSimulation">Reset</button>
+                    <button id="pauseSimulation">Pause</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Spacecraft Controls</h3>
+                <div class="control-row">
+                    <label>Initial Velocity:</label>
+                    <div class="control-input">
+                        <input type="range" id="initialVelocity" min="0" max="10" step="0.1" value="4.5">
+                        <span class="value-display" id="initialVelocityValue">4.5</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>Launch Angle:</label>
+                    <div class="control-input">
+                        <input type="range" id="launchAngle" min="0" max="360" step="5" value="90">
+                        <span class="value-display" id="launchAngleValue">90°</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>Trail Length:</label>
+                    <div class="control-input">
+                        <input type="range" id="trailLength" min="50" max="500" step="10" value="200">
+                        <span class="value-display" id="trailLengthValue">200</span>
+                    </div>
+                </div>
+                <div class="control-row">
+                    <label>Show Vectors:</label>
+                    <div class="control-input">
+                        <label class="switch">
+                            <input type="checkbox" id="showVectors">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="launchCraft">Launch New Craft</button>
+                    <button id="addManeuver" class="special-button">Add Maneuver</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <h3>Orbital Mechanics</h3>
+            <div class="data-columns">
+                <div class="data-column">
+                    <p>In an N-body system, all bodies exert gravitational forces on each other according to Newton's
+                        law of universal gravitation:</p>
+                    <p><strong>F = G × (m₁ × m₂) / r²</strong></p>
+                    <p>For a spacecraft in orbit:</p>
+                    <ul>
+                        <li>Circular orbit velocity: <strong>v = √(GM/r)</strong></li>
+                        <li>Orbital period: <strong>T = 2π × √(a³/GM)</strong></li>
+                        <li>Specific orbital energy: <strong>ε = v²/2 - GM/r</strong></li>
+                    </ul>
+                </div>
+                <div class="data-column">
+                    <p>The simulation uses numerical integration (Verlet) to solve the differential equations of motion
+                        for all bodies in the system.</p>
+                    <p>Orbital maneuvers change the spacecraft's velocity vector, resulting in a new orbit. Common
+                        maneuvers include:</p>
+                    <ul>
+                        <li><strong>Prograde burns:</strong> Increase orbital energy and raise the opposite side of the
+                            orbit</li>
+                        <li><strong>Retrograde burns:</strong> Decrease orbital energy and lower the opposite side</li>
+                        <li><strong>Normal/Anti-normal:</strong> Change the orbital plane</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main simulation class
+        class OrbitalSimulation {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+
+                // Simulation parameters
+                this.gravitationalConstant = 100;
+                this.timeScale = 1.0;
+                this.paused = false;
+                this.useNBodyPhysics = true;
+                this.showVectors = false;
+
+                // Visual parameters
+                this.zoomLevel = 1.0;
+                this.panOffset = { x: 0, y: 0 };
+                this.trailLength = 200;
+
+                // Entities in simulation
+                this.celestialBodies = [];
+                this.spacecraft = [];
+                this.selectedCraft = null;
+                this.maneuverTarget = null;
+
+                // Initialize stars
+                this.stars = this.generateStars(500);
+
+                // UI elements
+                this.infoOverlay = document.getElementById('infoOverlay');
+                this.tooltip = document.getElementById('tooltip');
+                this.maneuverPanel = document.getElementById('maneuverPanel');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+
+                // Initialize the simulation
+                this.initializeUI();
+                this.setupEventListeners();
+                this.loadSystem('sun-earth');
+
+                // Animation loop
+                this.lastTimestamp = 0;
+                this.running = true;
+                this.isLoading = true;
+
+                // Start simulation
+                requestAnimationFrame(this.animate.bind(this));
+
+                // Remove loading indicator after a short delay
+                setTimeout(() => {
+                    this.isLoading = false;
+                    this.loadingIndicator.style.display = 'none';
+                }, 1500);
+            }
+
+            // Initialize UI elements
+            initializeUI() {
+                // Update all UI values to match initial state
+                document.getElementById('timeScaleValue').textContent = this.timeScale.toFixed(1) + 'x';
+                document.getElementById('gravityConstantValue').textContent = this.gravitationalConstant;
+                document.getElementById('initialVelocityValue').textContent = '4.5';
+                document.getElementById('launchAngleValue').textContent = '90°';
+                document.getElementById('trailLengthValue').textContent = this.trailLength;
+                document.getElementById('deltaVMagnitudeValue').textContent = '1.0';
+                document.getElementById('deltaVDirectionValue').textContent = '0°';
+            }
+
+            // Set up event listeners for UI controls
+            setupEventListeners() {
+                // Simulation controls
+                document.getElementById('timeScale').addEventListener('input', (e) => {
+                    this.timeScale = parseFloat(e.target.value);
+                    document.getElementById('timeScaleValue').textContent = this.timeScale.toFixed(1) + 'x';
+                });
+
+                document.getElementById('gravityConstant').addEventListener('input', (e) => {
+                    this.gravitationalConstant = parseFloat(e.target.value);
+                    document.getElementById('gravityConstantValue').textContent = this.gravitationalConstant;
+                });
+
+                document.getElementById('systemType').addEventListener('change', (e) => {
+                    this.loadSystem(e.target.value);
+                });
+
+                document.getElementById('nBodyPhysics').addEventListener('change', (e) => {
+                    this.useNBodyPhysics = e.target.checked;
+                });
+
+                document.getElementById('resetSimulation').addEventListener('click', () => {
+                    this.loadSystem(document.getElementById('systemType').value);
+                });
+
+                document.getElementById('pauseSimulation').addEventListener('click', () => {
+                    this.paused = !this.paused;
+                    document.getElementById('pauseSimulation').textContent = this.paused ? 'Resume' : 'Pause';
+                });
+
+                // Spacecraft controls
+                document.getElementById('initialVelocity').addEventListener('input', (e) => {
+                    document.getElementById('initialVelocityValue').textContent = parseFloat(e.target.value).toFixed(1);
+                });
+
+                document.getElementById('launchAngle').addEventListener('input', (e) => {
+                    document.getElementById('launchAngleValue').textContent = e.target.value + '°';
+                });
+
+                document.getElementById('trailLength').addEventListener('input', (e) => {
+                    this.trailLength = parseInt(e.target.value);
+                    document.getElementById('trailLengthValue').textContent = this.trailLength;
+                });
+
+                document.getElementById('showVectors').addEventListener('change', (e) => {
+                    this.showVectors = e.target.checked;
+                });
+
+                document.getElementById('launchCraft').addEventListener('click', () => {
+                    this.launchNewSpacecraft();
+                });
+
+                // Maneuver controls
+                document.getElementById('addManeuver').addEventListener('click', () => {
+                    if (this.selectedCraft) {
+                        this.maneuverTarget = this.selectedCraft;
+                        this.maneuverPanel.style.display = 'block';
+
+                        // Position the panel near the selected craft
+                        const craftScreenPos = this.worldToScreen(this.selectedCraft.position);
+                        this.maneuverPanel.style.left = `${craftScreenPos.x + 30}px`;
+                        this.maneuverPanel.style.top = `${craftScreenPos.y - 100}px`;
+                    }
+                });
+
+                document.getElementById('closeManeuver').addEventListener('click', () => {
+                    this.maneuverPanel.style.display = 'none';
+                    this.maneuverTarget = null;
+                });
+
+                document.getElementById('cancelManeuver').addEventListener('click', () => {
+                    this.maneuverPanel.style.display = 'none';
+                    this.maneuverTarget = null;
+                });
+
+                document.getElementById('deltaVMagnitude').addEventListener('input', (e) => {
+                    document.getElementById('deltaVMagnitudeValue').textContent = parseFloat(e.target.value).toFixed(1);
+                });
+
+                document.getElementById('deltaVDirection').addEventListener('input', (e) => {
+                    document.getElementById('deltaVDirectionValue').textContent = e.target.value + '°';
+                });
+
+                document.getElementById('applyManeuver').addEventListener('click', () => {
+                    this.applyManeuver();
+                    this.maneuverPanel.style.display = 'none';
+                    this.maneuverTarget = null;
+                });
+
+                // Canvas interaction
+                this.canvas.addEventListener('click', (e) => {
+                    this.handleCanvasClick(e);
+                });
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    this.handleCanvasMouseMove(e);
+                });
+
+                this.canvas.addEventListener('mouseout', () => {
+                    this.tooltip.style.opacity = '0';
+                });
+            }
+
+            // Generate stars for background
+            generateStars(count) {
+                const stars = [];
+                for (let i = 0; i < count; i++) {
+                    const size = Math.random() * 1.5 + 0.5;
+                    stars.push({
+                        x: Math.random() * this.width,
+                        y: Math.random() * this.height,
+                        size: size,
+                        brightness: Math.random() * 0.5 + 0.5
+                    });
+                }
+                return stars;
+            }
+
+            // Load predefined celestial systems
+            loadSystem(systemType) {
+                // Clear existing objects
+                this.celestialBodies = [];
+                this.spacecraft = [];
+                this.selectedCraft = null;
+
+                switch (systemType) {
+                    case 'sun-earth':
+                        // Sun at center
+                        this.celestialBodies.push({
+                            name: 'Sun',
+                            mass: 1000,
+                            radius: 20,
+                            position: { x: this.centerX, y: this.centerY },
+                            velocity: { x: 0, y: 0 },
+                            color: '#ffcc00',
+                            glowColor: 'rgba(255, 204, 0, 0.3)',
+                            glowSize: 35
+                        });
+
+                        // Earth in orbit
+                        const earthDistance = 200;
+                        const earthSpeed = Math.sqrt(this.gravitationalConstant * 1000 / earthDistance);
+                        this.celestialBodies.push({
+                            name: 'Earth',
+                            mass: 50,
+                            radius: 10,
+                            position: { x: this.centerX + earthDistance, y: this.centerY },
+                            velocity: { x: 0, y: earthSpeed },
+                            color: '#3584e4',
+                            glowColor: 'rgba(53, 132, 228, 0.3)',
+                            glowSize: 18
+                        });
+                        break;
+
+                    case 'sun-earth-moon':
+                        // Sun at center
+                        this.celestialBodies.push({
+                            name: 'Sun',
+                            mass: 1000,
+                            radius: 20,
+                            position: { x: this.centerX, y: this.centerY },
+                            velocity: { x: 0, y: 0 },
+                            color: '#ffcc00',
+                            glowColor: 'rgba(255, 204, 0, 0.3)',
+                            glowSize: 35
+                        });
+
+                        // Earth in orbit
+                        const earthDist = 200;
+                        const earthVel = Math.sqrt(this.gravitationalConstant * 1000 / earthDist);
+                        const earthPos = { x: this.centerX + earthDist, y: this.centerY };
+                        this.celestialBodies.push({
+                            name: 'Earth',
+                            mass: 50,
+                            radius: 10,
+                            position: { ...earthPos },
+                            velocity: { x: 0, y: earthVel },
+                            color: '#3584e4',
+                            glowColor: 'rgba(53, 132, 228, 0.3)',
+                            glowSize: 18
+                        });
+
+                        // Moon around Earth
+                        const moonDistance = 30;
+                        const moonSpeed = Math.sqrt(this.gravitationalConstant * 50 / moonDistance);
+                        this.celestialBodies.push({
+                            name: 'Moon',
+                            mass: 5,
+                            radius: 4,
+                            position: { x: earthPos.x + moonDistance, y: earthPos.y },
+                            velocity: { x: 0, y: earthVel + moonSpeed },
+                            color: '#d3d7cf',
+                            glowColor: 'rgba(211, 215, 207, 0.2)',
+                            glowSize: 8
+                        });
+                        break;
+
+                    case 'binary-star':
+                        // First star
+                        const star1Mass = 800;
+                        const star1Distance = 70;
+                        const systemCenterOfMass = { x: this.centerX, y: this.centerY };
+
+                        // Calculate orbit parameters for binary system
+                        const star2Mass = 600;
+                        const star2Distance = (star1Mass / star2Mass) * star1Distance;
+                        const binaryOrbitalVelocity = Math.sqrt(this.gravitationalConstant * (star1Mass + star2Mass) / (star1Distance + star2Distance));
+
+                        // Star 1
+                        this.celestialBodies.push({
+                            name: 'Alpha Star',
+                            mass: star1Mass,
+                            radius: 18,
+                            position: {
+                                x: systemCenterOfMass.x - star1Distance,
+                                y: systemCenterOfMass.y
+                            },
+                            velocity: {
+                                x: 0,
+                                y: -binaryOrbitalVelocity * (star2Mass / (star1Mass + star2Mass))
+                            },
+                            color: '#ffbb33',
+                            glowColor: 'rgba(255, 187, 51, 0.3)',
+                            glowSize: 32
+                        });
+
+                        // Star 2
+                        this.celestialBodies.push({
+                            name: 'Beta Star',
+                            mass: star2Mass,
+                            radius: 15,
+                            position: {
+                                x: systemCenterOfMass.x + star2Distance,
+                                y: systemCenterOfMass.y
+                            },
+                            velocity: {
+                                x: 0,
+                                y: binaryOrbitalVelocity * (star1Mass / (star1Mass + star2Mass))
+                            },
+                            color: '#33bbff',
+                            glowColor: 'rgba(51, 187, 255, 0.3)',
+                            glowSize: 28
+                        });
+
+                        // Distant planet
+                        this.celestialBodies.push({
+                            name: 'Outer Planet',
+                            mass: 30,
+                            radius: 8,
+                            position: { x: systemCenterOfMass.x, y: systemCenterOfMass.y - 300 }, velocity: { x: Math.sqrt(this.gravitationalConstant * (star1Mass + star2Mass) / 300), y: 0 },
+                            color: '#33cc33',
+                            glowColor: 'rgba(51, 204, 51, 0.2)',
+                            glowSize: 14
+                        });
+                        break;
+
+                    case 'custom':
+                        // Custom system with multiple bodies
+                        // Central massive object
+                        this.celestialBodies.push({
+                            name: 'Central Mass',
+                            mass: 1200,
+                            radius: 22,
+                            position: { x: this.centerX, y: this.centerY },
+                            velocity: { x: 0, y: 0 },
+                            color: '#ff5500',
+                            glowColor: 'rgba(255, 85, 0, 0.3)',
+                            glowSize: 40
+                        });
+
+                        // Add some planets at different distances
+                        const planetColors = ['#3584e4', '#33cc33', '#ffcc00', '#ff6600', '#cc33ff'];
+                        const planetCount = 4;
+
+                        for (let i = 0; i < planetCount; i++) {
+                            const distance = 80 + i * 60;
+                            const angle = Math.random() * Math.PI * 2;
+                            const mass = 10 + Math.random() * 40;
+                            const radius = 5 + Math.sqrt(mass) / 2;
+
+                            // Calculate orbital velocity for approximate circular orbit
+                            const orbitalVelocity = Math.sqrt(this.gravitationalConstant * 1200 / distance);
+
+                            // Position based on angle and distance
+                            const x = this.centerX + Math.cos(angle) * distance;
+                            const y = this.centerY + Math.sin(angle) * distance;
+
+                            // Velocity perpendicular to position vector for circular orbit
+                            const vx = -Math.sin(angle) * orbitalVelocity;
+                            const vy = Math.cos(angle) * orbitalVelocity;
+
+                            const colorIndex = i % planetColors.length;
+
+                            this.celestialBodies.push({
+                                name: `Planet ${i + 1}`,
+                                mass: mass,
+                                radius: radius,
+                                position: { x, y },
+                                velocity: { x: vx, y: vy },
+                                color: planetColors[colorIndex],
+                                glowColor: `rgba(${this.hexToRgb(planetColors[colorIndex])}, 0.2)`,
+                                glowSize: radius * 1.8
+                            });
+
+                            // Add a moon to some planets
+                            if (i > 0 && Math.random() > 0.5) {
+                                const moonDistance = radius * 2.5;
+                                const moonAngle = Math.random() * Math.PI * 2;
+                                const moonMass = mass * 0.1;
+                                const moonRadius = radius * 0.4;
+
+                                // Moon's orbital velocity around planet
+                                const moonOrbVelocity = Math.sqrt(this.gravitationalConstant * mass / moonDistance);
+
+                                // Moon position relative to planet
+                                const mx = x + Math.cos(moonAngle) * moonDistance;
+                                const my = y + Math.sin(moonAngle) * moonDistance;
+
+                                // Moon velocity is planet velocity plus its own orbital velocity
+                                const mvx = vx - Math.sin(moonAngle) * moonOrbVelocity;
+                                const mvy = vy + Math.cos(moonAngle) * moonOrbVelocity;
+
+                                this.celestialBodies.push({
+                                    name: `Moon of Planet ${i + 1}`,
+                                    mass: moonMass,
+                                    radius: moonRadius,
+                                    position: { x: mx, y: my },
+                                    velocity: { x: mvx, y: mvy },
+                                    color: '#d3d7cf',
+                                    glowColor: 'rgba(211, 215, 207, 0.2)',
+                                    glowSize: moonRadius * 2
+                                });
+                            }
+                        }
+                        break;
+                }
+            }
+
+            // Launch a new spacecraft
+            launchNewSpacecraft() {
+                // Find Earth or the first non-sun body to launch from
+                let launchBody = this.celestialBodies.find(body => body.name === 'Earth');
+                if (!launchBody) {
+                    launchBody = this.celestialBodies.length > 1 ? this.celestialBodies[1] : this.celestialBodies[0];
+                }
+
+                const launchAngleRad = parseInt(document.getElementById('launchAngle').value) * Math.PI / 180;
+                const initialSpeed = parseFloat(document.getElementById('initialVelocity').value);
+
+                // Calculate launch position slightly above the body's surface
+                const launchDirection = {
+                    x: Math.cos(launchAngleRad),
+                    y: Math.sin(launchAngleRad)
+                };
+
+                const launchPos = {
+                    x: launchBody.position.x + launchDirection.x * (launchBody.radius + 5),
+                    y: launchBody.position.y + launchDirection.y * (launchBody.radius + 5)
+                };
+
+                // Launch velocity is body velocity plus the directed speed
+                const launchVel = {
+                    x: launchBody.velocity.x + launchDirection.x * initialSpeed,
+                    y: launchBody.velocity.y + launchDirection.y * initialSpeed
+                };
+
+                // Create the spacecraft
+                const newCraft = {
+                    name: `Spacecraft ${this.spacecraft.length + 1}`,
+                    mass: 1,
+                    radius: 3,
+                    position: { ...launchPos },
+                    velocity: { ...launchVel },
+                    color: '#ffffff',
+                    trailColor: 'rgba(255, 255, 255, 0.5)',
+                    trail: [],
+                    parentBody: launchBody.name,
+                    launchTime: Date.now()
+                };
+
+                this.spacecraft.push(newCraft);
+                this.selectedCraft = newCraft;
+            }
+
+            // Apply orbital maneuver to selected spacecraft
+            applyManeuver() {
+                if (!this.maneuverTarget) return;
+
+                const deltaVMagnitude = parseFloat(document.getElementById('deltaVMagnitude').value);
+                const deltaVDirection = parseInt(document.getElementById('deltaVDirection').value) * Math.PI / 180;
+
+                // Calculate velocity change components
+                const dvx = Math.cos(deltaVDirection) * deltaVMagnitude;
+                const dvy = Math.sin(deltaVDirection) * deltaVMagnitude;
+
+                // Apply velocity change
+                this.maneuverTarget.velocity.x += dvx;
+                this.maneuverTarget.velocity.y += dvy;
+
+                // Add maneuver marker to the trail
+                this.maneuverTarget.trail.push({
+                    position: { ...this.maneuverTarget.position },
+                    isManeuver: true,
+                    deltaV: { x: dvx, y: dvy, magnitude: deltaVMagnitude }
+                });
+            }
+
+            // Update the simulation state
+            update(deltaTime) {
+                if (this.paused) return;
+
+                const scaledDeltaTime = deltaTime * this.timeScale * 0.1;
+
+                // Update celestial bodies
+                for (let i = 0; i < this.celestialBodies.length; i++) {
+                    const body = this.celestialBodies[i];
+
+                    // Calculate gravitational forces if using N-body physics
+                    if (this.useNBodyPhysics) {
+                        let totalForceX = 0;
+                        let totalForceY = 0;
+
+                        // Sum forces from all other bodies
+                        for (let j = 0; j < this.celestialBodies.length; j++) {
+                            if (i === j) continue;
+
+                            const otherBody = this.celestialBodies[j];
+                            const dx = otherBody.position.x - body.position.x;
+                            const dy = otherBody.position.y - body.position.y;
+                            const distanceSquared = dx * dx + dy * dy;
+                            const distance = Math.sqrt(distanceSquared);
+
+                            // Skip if bodies are too close (to avoid extreme forces)
+                            if (distance < body.radius + otherBody.radius) continue;
+
+                            // Calculate gravitational force
+                            const forceMagnitude = this.gravitationalConstant * (body.mass * otherBody.mass) / distanceSquared;
+                            const forceX = forceMagnitude * dx / distance;
+                            const forceY = forceMagnitude * dy / distance;
+
+                            totalForceX += forceX;
+                            totalForceY += forceY;
+                        }
+
+                        // Calculate acceleration
+                        const accelerationX = totalForceX / body.mass;
+                        const accelerationY = totalForceY / body.mass;
+
+                        // Update velocity (simple Euler integration)
+                        body.velocity.x += accelerationX * scaledDeltaTime;
+                        body.velocity.y += accelerationY * scaledDeltaTime;
+                    }
+
+                    // Update position
+                    body.position.x += body.velocity.x * scaledDeltaTime;
+                    body.position.y += body.velocity.y * scaledDeltaTime;
+                }
+
+                // Update spacecraft
+                for (let i = 0; i < this.spacecraft.length; i++) {
+                    const craft = this.spacecraft[i];
+
+                    // Calculate gravitational forces from all celestial bodies
+                    let totalForceX = 0;
+                    let totalForceY = 0;
+
+                    for (let j = 0; j < this.celestialBodies.length; j++) {
+                        const body = this.celestialBodies[j];
+                        const dx = body.position.x - craft.position.x;
+                        const dy = body.position.y - craft.position.y;
+                        const distanceSquared = dx * dx + dy * dy;
+                        const distance = Math.sqrt(distanceSquared);
+
+                        // Skip if craft is too close or inside the body
+                        if (distance < body.radius) continue;
+
+                        // Calculate gravitational force
+                        const forceMagnitude = this.gravitationalConstant * (craft.mass * body.mass) / distanceSquared;
+                        const forceX = forceMagnitude * dx / distance;
+                        const forceY = forceMagnitude * dy / distance;
+
+                        totalForceX += forceX;
+                        totalForceY += forceY;
+                    }
+
+                    // Calculate acceleration
+                    const accelerationX = totalForceX / craft.mass;
+                    const accelerationY = totalForceY / craft.mass;
+
+                    // Update velocity (simple Euler integration)
+                    craft.velocity.x += accelerationX * scaledDeltaTime;
+                    craft.velocity.y += accelerationY * scaledDeltaTime;
+
+                    // Update position
+                    craft.position.x += craft.velocity.x * scaledDeltaTime;
+                    craft.position.y += craft.velocity.y * scaledDeltaTime;
+
+                    // Update trail
+                    if (craft.trail.length > this.trailLength) {
+                        craft.trail.shift();
+                    }
+
+                    craft.trail.push({
+                        position: { x: craft.position.x, y: craft.position.y }
+                    });
+
+                    // Check for collision with celestial bodies
+                    for (const body of this.celestialBodies) {
+                        const dx = body.position.x - craft.position.x;
+                        const dy = body.position.y - craft.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < body.radius) {
+                            // Collision occurred, remove spacecraft
+                            this.spacecraft.splice(i, 1);
+                            i--;
+
+                            if (this.selectedCraft === craft) {
+                                this.selectedCraft = null;
+                            }
+
+                            if (this.maneuverTarget === craft) {
+                                this.maneuverTarget = null;
+                                this.maneuverPanel.style.display = 'none';
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                // Update info overlay
+                this.updateInfoOverlay();
+            }
+
+            // Render the simulation
+            render() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // Draw stars
+                this.drawStars();
+
+                // Draw celestial bodies
+                for (const body of this.celestialBodies) {
+                    this.drawCelestialBody(body);
+                }
+
+                // Draw spacecraft and their trails
+                for (const craft of this.spacecraft) {
+                    this.drawSpacecraftTrail(craft);
+                    this.drawSpacecraft(craft);
+
+                    if (this.showVectors && craft === this.selectedCraft) {
+                        this.drawVelocityVector(craft);
+                    }
+                }
+
+                // Draw maneuver vector if adding a maneuver
+                if (this.maneuverTarget && this.maneuverPanel.style.display === 'block') {
+                    this.drawManeuverVector();
+                }
+            }
+
+            // Draw the starfield background
+            drawStars() {
+                this.ctx.globalAlpha = 1.0;
+                for (const star of this.stars) {
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+
+            // Draw a celestial body with glow effect
+            drawCelestialBody(body) {
+                const pos = this.worldToScreen(body.position);
+                const radius = body.radius * this.zoomLevel;
+
+                // Draw glow
+                const gradient = this.ctx.createRadialGradient(
+                    pos.x, pos.y, radius,
+                    pos.x, pos.y, body.glowSize * this.zoomLevel
+                );
+                gradient.addColorStop(0, body.glowColor);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, body.glowSize * this.zoomLevel, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Draw body
+                this.ctx.fillStyle = body.color;
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Draw name
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(body.name, pos.x, pos.y + radius + 15);
+            }
+
+            // Draw spacecraft
+            drawSpacecraft(craft) {
+                const pos = this.worldToScreen(craft.position);
+                const radius = craft.radius * this.zoomLevel;
+
+                // Draw spacecraft
+                this.ctx.fillStyle = craft.color;
+                this.ctx.beginPath();
+                this.ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Highlight selected spacecraft
+                if (craft === this.selectedCraft) {
+                    this.ctx.strokeStyle = '#55ff55';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+            }
+
+            // Draw spacecraft's trail
+            drawSpacecraftTrail(craft) {
+                if (craft.trail.length < 2) return;
+
+                this.ctx.beginPath();
+
+                for (let i = 0; i < craft.trail.length; i++) {
+                    const point = craft.trail[i];
+                    const pos = this.worldToScreen(point.position);
+
+                    if (i === 0) {
+                        this.ctx.moveTo(pos.x, pos.y);
+                    } else {
+                        this.ctx.lineTo(pos.x, pos.y);
+                    }
+
+                    // Draw maneuver points
+                    if (point.isManeuver) {
+                        this.ctx.save();
+                        this.ctx.fillStyle = '#ff5555';
+                        this.ctx.beginPath();
+                        this.ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                    }
+                }
+
+                this.ctx.strokeStyle = craft.trailColor;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+            }
+
+            // Draw velocity vector
+            drawVelocityVector(craft) {
+                const pos = this.worldToScreen(craft.position);
+                const velocityScale = 5;
+
+                const endX = pos.x + craft.velocity.x * velocityScale;
+                const endY = pos.y + craft.velocity.y * velocityScale;
+
+                // Draw velocity vector
+                this.ctx.strokeStyle = '#55ff55';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(pos.x, pos.y);
+                this.ctx.lineTo(endX, endY);
+                this.ctx.stroke();
+
+                // Draw arrowhead
+                const angle = Math.atan2(endY - pos.y, endX - pos.x);
+                this.ctx.beginPath();
+                this.ctx.moveTo(endX, endY);
+                this.ctx.lineTo(
+                    endX - 10 * Math.cos(angle - Math.PI / 6),
+                    endY - 10 * Math.sin(angle - Math.PI / 6)
+                );
+                this.ctx.lineTo(
+                    endX - 10 * Math.cos(angle + Math.PI / 6),
+                    endY - 10 * Math.sin(angle + Math.PI / 6)
+                );
+                this.ctx.closePath();
+                this.ctx.fillStyle = '#55ff55';
+                this.ctx.fill();
+            }
+
+            // Draw maneuver vector during planning
+            drawManeuverVector() {
+                const deltaVMagnitude = parseFloat(document.getElementById('deltaVMagnitude').value);
+                const deltaVDirection = parseInt(document.getElementById('deltaVDirection').value) * Math.PI / 180;
+
+                const pos = this.worldToScreen(this.maneuverTarget.position);
+                const vectorScale = 15;
+
+                const endX = pos.x + Math.cos(deltaVDirection) * deltaVMagnitude * vectorScale;
+                const endY = pos.y + Math.sin(deltaVDirection) * deltaVMagnitude * vectorScale;
+
+                // Draw maneuver vector
+                this.ctx.strokeStyle = '#ff5555';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(pos.x, pos.y);
+                this.ctx.lineTo(endX, endY);
+                this.ctx.stroke();
+
+                // Draw arrowhead
+                const angle = Math.atan2(endY - pos.y, endX - pos.x);
+                this.ctx.beginPath();
+                this.ctx.moveTo(endX, endY);
+                this.ctx.lineTo(
+                    endX - 10 * Math.cos(angle - Math.PI / 6),
+                    endY - 10 * Math.sin(angle - Math.PI / 6)
+                );
+                this.ctx.lineTo(
+                    endX - 10 * Math.cos(angle + Math.PI / 6),
+                    endY - 10 * Math.sin(angle + Math.PI / 6)
+                );
+                this.ctx.closePath();
+                this.ctx.fillStyle = '#ff5555';
+                this.ctx.fill();
+            }
+
+            // Convert world coordinates to screen coordinates
+            worldToScreen(position) {
+                return {
+                    x: (position.x - this.centerX) * this.zoomLevel + this.centerX + this.panOffset.x,
+                    y: (position.y - this.centerY) * this.zoomLevel + this.centerY + this.panOffset.y
+                };
+            }
+
+            // Convert screen coordinates to world coordinates
+            screenToWorld(position) {
+                return {
+                    x: (position.x - this.centerX - this.panOffset.x) / this.zoomLevel + this.centerX,
+                    y: (position.y - this.centerY - this.panOffset.y) / this.zoomLevel + this.centerY
+                };
+            }
+
+            // Update the info overlay with current simulation data
+            updateInfoOverlay() {
+                if (!this.selectedCraft) {
+                    this.infoOverlay.innerHTML = `
+            <div>Sim Speed: ${this.timeScale.toFixed(1)}x</div>
+            <div>Bodies: ${this.celestialBodies.length}</div>
+            <div>Spacecraft: ${this.spacecraft.length}</div>
+            <div>Physics: ${this.useNBodyPhysics ? 'N-Body' : 'Simplified'}</div>
+          `;
+                    return;
+                }
+
+                // For selected spacecraft, show more detailed info
+                const craft = this.selectedCraft;
+                const speed = Math.sqrt(craft.velocity.x * craft.velocity.x + craft.velocity.y * craft.velocity.y);
+
+                // Find closest celestial body
+                let closestBody = null;
+                let closestDistance = Infinity;
+
+                for (const body of this.celestialBodies) {
+                    const dx = body.position.x - craft.position.x;
+                    const dy = body.position.y - craft.position.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestBody = body;
+                    }
+                }
+
+                // Calculate orbital parameters if there's a closest body
+                let orbitalInfo = '';
+                if (closestBody) {
+                    const dx = craft.position.x - closestBody.position.x;
+                    const dy = craft.position.y - closestBody.position.y;
+                    const r = Math.sqrt(dx * dx + dy * dy);
+
+                    const dvx = craft.velocity.x - closestBody.velocity.x;
+                    const dvy = craft.velocity.y - closestBody.velocity.y;
+                    const v = Math.sqrt(dvx * dvx + dvy * dvy);
+
+                    const mu = this.gravitationalConstant * closestBody.mass;
+
+                    // Specific orbital energy
+                    const specificEnergy = (v * v / 2) - (mu / r);
+
+                    // Semi-major axis
+                    const a = -mu / (2 * specificEnergy);
+
+                    // Eccentricity
+                    const h = dx * dvy - dy * dvx;  // Specific angular momentum
+                    const e = Math.sqrt(1 + (2 * specificEnergy * h * h) / (mu * mu));
+
+                    orbitalInfo = `
+            <div>Ref Body: ${closestBody.name}</div>
+            <div>Distance: ${r.toFixed(1)} units</div>
+            <div>Semi-major axis: ${a > 0 ? a.toFixed(1) : 'N/A'}</div>
+            <div>Eccentricity: ${e.toFixed(3)}</div>
+          `;
+                }
+
+                this.infoOverlay.innerHTML = `
+          <div>Craft: ${craft.name}</div>
+          <div>Velocity: ${speed.toFixed(2)} units/s</div>
+          <div>Launch from: ${craft.parentBody}</div>
+          <div>Flight time: ${((Date.now() - craft.launchTime) / 1000).toFixed(1)}s</div>
+          ${orbitalInfo}
+        `;
+            }
+
+            // Handle canvas click
+            handleCanvasClick(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                const clickY = event.clientY - rect.top;
+
+                // Check if clicked on a spacecraft
+                for (const craft of this.spacecraft) {
+                    const pos = this.worldToScreen(craft.position);
+                    const dx = clickX - pos.x;
+                    const dy = clickY - pos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance <= craft.radius * this.zoomLevel + 5) {
+                        this.selectedCraft = craft;
+                        return;
+                    }
+                }
+
+                // Check if clicked on a celestial body
+                for (const body of this.celestialBodies) {
+                    const pos = this.worldToScreen(body.position);
+                    const dx = clickX - pos.x;
+                    const dy = clickY - pos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance <= body.radius * this.zoomLevel) {
+                        // Deselect spacecraft when clicking on a body
+                        this.selectedCraft = null;
+                        return;
+                    }
+                }
+            }
+
+            // Handle mouse move for tooltips
+            handleCanvasMouseMove(event) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+
+                // Convert to world coordinates
+                const worldPos = this.screenToWorld({ x: mouseX, y: mouseY });
+
+                // Check if mouse is over any body
+                for (const body of this.celestialBodies) {
+                    const dx = worldPos.x - body.position.x;
+                    const dy = worldPos.y - body.position.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance <= body.radius) {
+                        // Show tooltip for body
+                        this.tooltip.style.left = `${event.clientX + 10}px`;
+                        this.tooltip.style.top = `${event.clientY + 10}px`;
+                        this.tooltip.innerHTML = `
+              <h4>${body.name}</h4>
+              <div class="tooltip-data">
+                <span>Mass:</span>
+                <span>${body.mass.toFixed(1)}</span>
+              </div>
+              <div class="tooltip-data">
+                <span>Velocity:</span>
+                <span>${Math.sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y).toFixed(2)}</span>
+              </div>
+            `;
+                        this.tooltip.style.opacity = '1';
+                        return;
+                    }
+                }
+
+                // Check if mouse is over any spacecraft
+                for (const craft of this.spacecraft) {
+                    const dx = worldPos.x - craft.position.x;
+                    const dy = worldPos.y - craft.position.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance <= craft.radius + 3) {
+                        // Show tooltip for spacecraft
+                        this.tooltip.style.left = `${event.clientX + 10}px`;
+                        this.tooltip.style.top = `${event.clientY + 10}px`;
+
+                        // Calculate velocity
+                        const velocity = Math.sqrt(craft.velocity.x * craft.velocity.x + craft.velocity.y * craft.velocity.y);
+
+                        this.tooltip.innerHTML = `
+              <h4>${craft.name}</h4>
+              <div class="tooltip-data">
+                <span>Velocity:</span>
+                <span>${velocity.toFixed(2)}</span>
+              </div>
+              <div class="tooltip-data">
+                <span>Origin:</span>
+                <span>${craft.parentBody}</span>
+              </div>
+              <p>Click to select</p>
+            `;
+                        this.tooltip.style.opacity = '1';
+                        return;
+                    }
+                }
+
+                // Hide tooltip if not over any object
+                this.tooltip.style.opacity = '0';
+            }
+
+            // Animation loop
+            animate(timestamp) {
+                // Calculate delta time
+                const deltaTime = this.lastTimestamp ? (timestamp - this.lastTimestamp) / 1000 : 0.016;
+                this.lastTimestamp = timestamp;
+
+                if (this.running && !this.isLoading) {
+                    this.update(deltaTime);
+                    this.render();
+                }
+
+                requestAnimationFrame(this.animate.bind(this));
+            }
+
+            // Utility: Convert hex color to RGB
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ?
+                    `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
+                    '255, 255, 255';
+            }
+        }
+
+        // Initialize the simulation when the page is loaded
+        window.addEventListener('load', () => {
+            const simulation = new OrbitalSimulation('simulationCanvas');
+        });
+    </script>
+</body>
+
+</html>
